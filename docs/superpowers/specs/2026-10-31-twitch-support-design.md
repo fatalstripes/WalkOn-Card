@@ -17,8 +17,8 @@ Bring the GTA VI overlay suite to Twitch with parity to YouTube: alerts, walk-on
   - `Twitch.Follow` -> `follow` (new)
   - `Twitch.Sub` -> `sub`
   - `Twitch.ReSub` -> `milestone`
-  - `Twitch.GiftSub`, `Twitch.GiftBomb` -> `gift`
-  - gifted-sub recipient event -> `giftRec`
+  - `Twitch.GiftBomb` -> `gift` (count)
+  - `Twitch.GiftSub` -> `giftRec` (recipient shown; subs that are part of a gift bomb are dropped to avoid flooding)
   - `Twitch.Cheer` -> `cheer` (new, shows bits)
   - `Twitch.Raid` -> `raid` (new, shows viewer count)
 - Every alert payload carries `platform` (`youtube` | `twitch`), set by both the JS hooks and the C# script.
