@@ -6,12 +6,25 @@ using Newtonsoft.Json.Linq;
 
 public class CPHInline
 {
+    private object ArgAny(params string[] keys)
+    {
+        foreach (string k in keys)
+            if (args.ContainsKey(k) && args[k] != null && args[k].ToString() != "") return args[k];
+        return null;
+    }
+
     public bool Execute()
     {
         // 1. Identify which trigger fired this action
         string triggerName = args.ContainsKey("triggerName") ? args["triggerName"].ToString() : "Unknown Event";
         bool isTest = args.ContainsKey("isTest") && args["isTest"].ToString().ToLower() == "true";
         string alertType = "generic";
+
+        string eventSource = args.ContainsKey("eventSource") ? args["eventSource"].ToString().ToLower() : "";
+        string tNameLower0 = triggerName.ToLower();
+        bool isTwitch = eventSource.Contains("twitch") || tNameLower0.Contains("twitch")
+                     || tNameLower0.Contains("cheer") || tNameLower0.Contains("raid") || tNameLower0.Contains("follow");
+        string platform = isTwitch ? "twitch" : "youtube";
 
         // Fix old YouTube terminology
         if (triggerName.IndexOf("New Sponsor", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -21,8 +34,18 @@ public class CPHInline
 
         string tNameLower = triggerName.ToLower();
 
-        // 2. Map YouTube Trigger Names to Overlay Alert Types
-        if (tNameLower.Contains("super chat")) alertType = "superchat";
+        // 2. Map Trigger Names to Overlay Alert Types
+        if (isTwitch)
+        {
+            if (tNameLower.Contains("cheer")) alertType = "cheer";
+            else if (tNameLower.Contains("raid")) alertType = "raid";
+            else if (tNameLower.Contains("follow")) alertType = "follow";
+            else if (tNameLower.Contains("resub")) alertType = "milestone";
+            else if (tNameLower.Contains("gift bomb") || tNameLower.Contains("community")) alertType = "gift";
+            else if (tNameLower.Contains("gift")) alertType = "giftRec";
+            else if (tNameLower.Contains("sub")) alertType = "sub";
+        }
+        else if (tNameLower.Contains("super chat")) alertType = "superchat";
         else if (tNameLower.Contains("super sticker")) alertType = "supersticker";
         else if (tNameLower.Contains("subscriber")) alertType = "sub";
         else if (tNameLower.Contains("milestone")) alertType = "milestone";
@@ -34,22 +57,35 @@ public class CPHInline
         var payload = new Dictionary<string, object>
         {
             { "event", "GTA_Alert" },
+            { "platform", platform },
             { "alertType", alertType },
             { "triggerName", triggerName }
         };
 
         // Standard User Variables (From Trigger Arguments)
         payload["userName"] = args.ContainsKey("user") ? args["user"].ToString() : 
-                             (args.ContainsKey("userName") ? args["userName"].ToString() : "YouTube Member");
+                             (args.ContainsKey("userName") ? args["userName"].ToString() : (isTwitch ? "Twitch Viewer" : "YouTube Member"));
         
         string userProfileUrl = args.ContainsKey("userProfileUrl") ? args["userProfileUrl"].ToString() : "";
         
         // ALWAYS force valid test image if isTest == true
         if (isTest)
         {
-            userProfileUrl = "https://yt3.ggpht.com/XhCX8VaSQAaxcZhSahLCjdB19626R1VNRKKTbCd_PSlepkyqEJYGbybrAbiLHtSDwBN9KN72vYE=s600-c-k-c0x00ffffff-no-rj";
+            userProfileUrl = isTwitch
+                ? "https://i.pravatar.cc/300?img=47"
+                : "https://yt3.ggpht.com/XhCX8VaSQAaxcZhSahLCjdB19626R1VNRKKTbCd_PSlepkyqEJYGbybrAbiLHtSDwBN9KN72vYE=s600-c-k-c0x00ffffff-no-rj";
         }
-        else if (!string.IsNullOrEmpty(userProfileUrl))
+        else if (isTwitch && string.IsNullOrEmpty(userProfileUrl))
+        {
+            try
+            {
+                string login = payload["userName"].ToString();
+                var info = CPH.TwitchGetExtendedUserInfoByLogin(login);
+                if (info != null) userProfileUrl = info.ProfileImageUrl ?? "";
+            }
+            catch (Exception ex) { CPH.LogWarn($"[GTA-Alert] Twitch avatar lookup failed: {ex.Message}"); }
+        }
+        else if (!isTwitch && !string.IsNullOrEmpty(userProfileUrl))
         {
             userProfileUrl = Regex.Replace(userProfileUrl, @"=s\d+-", "=s600-");
         }
@@ -58,28 +94,47 @@ public class CPHInline
         // 3. Map Event-Specific Argument Data
         switch (alertType)
         {
+            case "sub":
+                payload["levelName"] = ArgAny("tier", "subTier", "tierName") ?? "";
+                break;
+
+            case "follow":
+                break;
+
+            case "cheer":
+                payload["amount"] = ArgAny("bits", "amount") ?? 0;
+                payload["message"] = ArgAny("message", "rawInput") ?? "";
+                break;
+
+            case "raid":
+                payload["count"] = ArgAny("viewers", "viewerCount") ?? 0;
+                break;
+
             case "member":
                 payload["levelName"] = args.ContainsKey("tierName") ? args["tierName"] : "";
                 break;
                 
             case "milestone":
-                payload["levelName"] = args.ContainsKey("tierName") ? args["tierName"] : "";
-                payload["months"] = args.ContainsKey("months") ? args["months"] : 1;
+                payload["levelName"] = ArgAny("tier", "tierName") ?? "";
+                payload["months"] = ArgAny("cumulative", "months", "monthStreak") ?? 1;
                 payload["message"] = args.ContainsKey("message") ? args["message"] : "";
                 break;
                 
             case "gift":
-                string countStr = args.ContainsKey("count") ? args["count"].ToString() : "";
-                if (string.IsNullOrEmpty(countStr) && args.ContainsKey("amount"))
-                {
-                    countStr = args["amount"].ToString();
-                }
+                string countStr = ArgAny("gifts", "totalGifts", "count", "amount")?.ToString() ?? "";
                 if (isTest && string.IsNullOrEmpty(countStr)) countStr = "5";
                 if (string.IsNullOrEmpty(countStr)) countStr = "1";
                 payload["count"] = countStr;
                 break;
                 
             case "giftRec":
+                if (isTwitch)
+                {
+                    object recipient = ArgAny("recipientUser", "recipient", "targetUser");
+                    if (recipient != null) payload["userName"] = recipient.ToString();
+                    payload["gifterUser"] = args.ContainsKey("user") ? args["user"].ToString() : "Anonymous";
+                    break;
+                }
                 if (args.ContainsKey("gifterUser") && !string.IsNullOrEmpty(args["gifterUser"].ToString()))
                 {
                     payload["gifterUser"] = args["gifterUser"].ToString();
