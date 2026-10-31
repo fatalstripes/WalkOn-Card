@@ -79,7 +79,10 @@ public class CPHInline
         {
             try
             {
-                string login = payload["userName"].ToString();
+                object loginObj = (alertType == "giftRec")
+                    ? ArgAny("recipientUserLogin", "recipientLogin", "recipientUser", "recipient", "targetUser")
+                    : ArgAny("userLogin", "userName", "user");
+                string login = loginObj != null ? loginObj.ToString() : payload["userName"].ToString();
                 var info = CPH.TwitchGetExtendedUserInfoByLogin(login);
                 if (info != null) userProfileUrl = info.ProfileImageUrl ?? "";
             }
