@@ -19,6 +19,8 @@
   --glow-teal: color-mix(in srgb, var(--gta-teal) 45%, transparent);
   --glow-purple: color-mix(in srgb, var(--gta-purple) 45%, transparent);
   --glow-yellow: color-mix(in srgb, var(--gta-yellow) 45%, transparent);
+  --twitch-purple: #9146ff;
+  --glow-twitch: color-mix(in srgb, var(--twitch-purple) 45%, transparent);
 
   /* Gradients */
   --grad-gta-badge: linear-gradient(135deg, var(--gta-purple) 0%, var(--gta-pink) 100%);
@@ -319,6 +321,7 @@ body.preview-interactive .snap-guide.horizontal { left: 0; right: 0; height: 2px
 .alert-box.alert-sub { border-top-color: var(--gta-teal); box-shadow: 0 16px 40px rgba(0,0,0,0.8), 0 0 25px var(--glow-teal), inset 0 0 0 2px var(--gta-icon-stroke); }
 .alert-box.alert-member, .alert-box.alert-milestone { border-top-color: var(--gta-purple); box-shadow: 0 16px 40px rgba(0,0,0,0.8), 0 0 25px var(--glow-purple), inset 0 0 0 2px var(--gta-icon-stroke); }
 .alert-box.alert-superchat, .alert-box.alert-jewels { border-top-color: var(--gta-yellow); box-shadow: 0 16px 40px rgba(0,0,0,0.8), 0 0 25px var(--glow-yellow), inset 0 0 0 2px var(--gta-icon-stroke); }
+.alert-box.alert-follow, .alert-box.alert-cheer, .alert-box.alert-raid { border-top-color: var(--twitch-purple); box-shadow: 0 16px 40px rgba(0,0,0,0.8), 0 0 25px var(--glow-twitch), inset 0 0 0 2px var(--gta-icon-stroke); }
 
 .alert-header {
   display: flex;

@@ -17,6 +17,8 @@ const DEFAULT_STAT_ROWS = [
   { label: 'Loyalty', varName: 'loyaltyLevel', suffix: '',        icon: 'fa-eye',            iconColor: 'purple', valColor: 'teal',   fallback: 'Level 5' }
 ];
 
+const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
 const GTAOverlayConfig = (() => {
   const params = new URLSearchParams(window.location.search);
 
@@ -72,6 +74,9 @@ const GTAOverlayConfig = (() => {
       superchat: params.get('al_sc') !== '0',
       supersticker: params.get('al_stk') !== '0',
       jewels: params.get('al_jwl') !== '0',
+      follow: params.get('al_fol') !== '0',
+      cheer: params.get('al_cht') !== '0',
+      raid: params.get('al_rd') !== '0',
     },
 
     // Module 3: Shoutout Toast Config
@@ -507,6 +512,7 @@ class GTAOverlayEngine {
       subscribe: {
         General: ['Custom'],
         YouTube: ['*'],
+        Twitch: ['Follow', 'Sub', 'ReSub', 'GiftSub', 'GiftBomb', 'Cheer', 'Raid'],
         Misc: ['GlobalVariableUpdated']
       },
       onConnect: () => {
@@ -562,12 +568,21 @@ class GTAOverlayEngine {
       this.client.on('YouTube.GiftMembershipReceived', (p) => this.handleNativeAlert('giftRec', 'Gift Received', p.data));
       this.client.on('YouTube.SuperChat', (p) => this.handleNativeAlert('superchat', 'Super Chat', p.data));
       this.client.on('YouTube.SuperSticker', (p) => this.handleNativeAlert('supersticker', 'Super Sticker', p.data));
+
+      ['Follow', 'Sub', 'ReSub', 'GiftSub', 'GiftBomb', 'Cheer', 'Raid'].forEach((name) => {
+        this.client.on(`Twitch.${name}`, (p) => this.handleTwitchAlert(name, p.data));
+      });
     }
+  }
+
+  handleTwitchAlert(name, data) {
+    const alertData = window.GTATwitchEvents && window.GTATwitchEvents.mapTwitchEvent(name, data);
+    if (alertData) this.enqueueAlert(alertData);
   }
 
   handleNativeAlert(type, title, data) {
     if (!this.config.alertsConfig[type]) return; 
-    const alertData = { alertType: type, triggerName: title };
+    const alertData = { platform: 'youtube', alertType: type, triggerName: title };
     
     if (data.user) {
       alertData.userName = data.user.name || data.user.id;
@@ -731,7 +746,8 @@ class GTAOverlayEngine {
     if (!this.dom.alertContainer) return;
 
     const type = raw.alertType || 'sub';
-    this.dom.alertBox.className = `alert-box alert-${type}`;
+    const platform = raw.platform === 'twitch' ? 'twitch' : 'youtube';
+    this.dom.alertBox.className = `alert-box alert-${type} platform-${platform}`;
 
     const triggerName = this.getField(raw, 'triggerName') || 'New Event';
     const userName = this.getField(raw, 'userName', ['user']) || 'Username';
@@ -757,7 +773,7 @@ class GTAOverlayEngine {
     const bodyEl = document.getElementById('alert-body');
     bodyEl.innerHTML = '';
 
-    if (type === 'member' && levelName) {
+    if ((type === 'member' || type === 'sub') && levelName) {
       bodyEl.innerHTML += `<div class="alert-detail-row"><span>Tier</span><span class="alert-highlight">${levelName}</span></div>`;
     } else if (type === 'milestone') {
       bodyEl.innerHTML += `<div class="alert-detail-row"><span>Tenure</span><span class="alert-highlight">${months} Months</span></div>`;
@@ -771,6 +787,10 @@ class GTAOverlayEngine {
     } else if (type === 'supersticker') {
       bodyEl.innerHTML += `<div class="alert-detail-row"><span>Amount</span><span class="alert-highlight amount">${amount}</span></div>`;
       if (stickerUrl) bodyEl.innerHTML += `<div class="alert-media"><img src="${stickerUrl}" /></div>`;
+    } else if (type === 'cheer') {
+      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Bits</span><span class="alert-highlight amount">${escapeHtml(amount)}</span></div>`;
+    } else if (type === 'raid') {
+      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Raiders</span><span class="alert-highlight amount">${escapeHtml(count)} Viewers</span></div>`;
     } else if (type === 'jewels') {
       bodyEl.innerHTML += `<div class="alert-detail-row"><span>Sent</span><span class="alert-highlight amount">${jewelsAmount} Jewels</span></div>`;
       if (jewelsName) bodyEl.innerHTML += `<div class="alert-detail-row"><span>Gift</span><span class="alert-highlight">${jewelsName}</span></div>`;
@@ -778,7 +798,7 @@ class GTAOverlayEngine {
     }
 
     if (message) {
-      bodyEl.innerHTML += `<div class="alert-message">${message}</div>`;
+      bodyEl.innerHTML += `<div class="alert-message">${escapeHtml(message)}</div>`;
     }
 
     bodyEl.style.display = bodyEl.innerHTML === '' ? 'none' : 'flex';
