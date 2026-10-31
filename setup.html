@@ -204,6 +204,13 @@
         <label class="inline-toggle-row"><span>Jewels Gifted</span><input type="checkbox" class="switch" id="chk-al_jwl" checked></label>
       </div>
       <div class="panel">
+        <div class="panel-title"><i class="fa-brands fa-twitch"></i> Twitch Events</div>
+        <p style="font-size:0.75rem; color:#9aa4b2;">Twitch Sub, Resub, Gift Subs and Gift Received share the Subscriber, Milestone, Gift and Gift Received toggles above.</p>
+        <label class="inline-toggle-row"><span>New Follower</span><input type="checkbox" class="switch" id="chk-al_fol" checked></label>
+        <label class="inline-toggle-row"><span>Bits Cheered</span><input type="checkbox" class="switch" id="chk-al_cht" checked></label>
+        <label class="inline-toggle-row"><span>Incoming Raid</span><input type="checkbox" class="switch" id="chk-al_rd" checked></label>
+      </div>
+      <div class="panel">
         <div class="panel-title"><i class="fa-solid fa-up-down-left-right"></i> Alerts Position & Timing</div>
         <div class="toggle-strip">
           <label class="mini-switch-card"><span>Center H</span><input type="checkbox" class="switch" id="chk-aAlignH" checked></label>
@@ -313,12 +320,27 @@
             <option value="superchat">Super Chat</option>
             <option value="supersticker">Super Sticker</option>
             <option value="jewels">Jewels Gifted</option>
+            <option value="follow">Twitch: New Follower</option>
+            <option value="cheer">Twitch: Bits Cheered</option>
+            <option value="raid">Twitch: Incoming Raid</option>
+          </select>
+        </label>
+        <label>Simulate As Platform
+          <select id="sim-platform">
+            <option value="youtube">YouTube</option>
+            <option value="twitch">Twitch</option>
           </select>
         </label>
       </div>
       <div class="panel">
         <div class="panel-title"><i class="fa-brands fa-youtube"></i> Live SB User Test (Walk-On & Shoutout)</div>
         <label>Channel ID or Username <input type="text" id="test-user-input" placeholder="e.g. UCVu2Tib4ZyK3FzwnCjPBHGw or Username"></label>
+        <label>Lookup Platform
+          <select id="cfg-lookupPlatform">
+            <option value="youtube">YouTube</option>
+            <option value="twitch">Twitch</option>
+          </select>
+        </label>
         <label>SB Lookup Action <input type="text" id="cfg-lookupAction" value="GTA_LookupYouTubeUser"></label>
         <div class="grid-2">
           <button class="btn btn-pink" id="btn-test-user"><i class="fa-solid fa-id-card"></i> Pull & Test Card</button>
@@ -564,7 +586,7 @@
       'soX','soY','soScale','soDur','soAnim','soLayout','soTitle','soVar','soEvent'
     ];
     const checkboxToggles = [
-      'al_sub','al_mem','al_ms','al_gft','al_grc','al_sc','al_stk','al_jwl',
+      'al_sub','al_mem','al_ms','al_gft','al_grc','al_sc','al_stk','al_jwl','al_fol','al_cht','al_rd',
       'showAvatar','showUser','showTier','noBg','soNoBg'
     ];
     
@@ -703,6 +725,13 @@
     }
     const btnConnectSb = document.getElementById('btn-connect-sb');
     if (btnConnectSb) btnConnectSb.addEventListener('click', connectSetupToSB);
+    const lookupPlatformEl = document.getElementById('cfg-lookupPlatform');
+    if (lookupPlatformEl) {
+      lookupPlatformEl.addEventListener('change', () => {
+        const actionEl = document.getElementById('cfg-lookupAction');
+        if (actionEl) actionEl.value = lookupPlatformEl.value === 'twitch' ? 'GTA_LookupTwitchUser' : 'GTA_LookupYouTubeUser';
+      });
+    }
 
     // Mock Simulators
     const mocks = [
@@ -726,7 +755,8 @@
       btnSimAlert.addEventListener('click', () => {
         const typeEl = document.getElementById('sim-alert-type');
         const type = typeEl ? typeEl.value : 'sub';
-        const p = { alertType: type, userName: 'Lucia_Caminos', userProfileUrl: 'https://i.pravatar.cc/300?img=47' };
+        const platformEl = document.getElementById('sim-platform');
+        const p = { platform: (['follow','cheer','raid'].includes(type) ? 'twitch' : (platformEl ? platformEl.value : 'youtube')), alertType: type, userName: 'Lucia_Caminos', userProfileUrl: 'https://i.pravatar.cc/300?img=47' };
         if (type === 'sub') p.triggerName = "New Subscriber";
         if (type === 'member') { p.triggerName = "New Member"; p.levelName = "Leonida VIP"; }
         if (type === 'milestone') { p.triggerName = "Member Milestone"; p.months = 12; p.levelName = "Leonida VIP"; p.message = "Keep up the great streams!"; }
@@ -735,6 +765,9 @@
         if (type === 'superchat') { p.triggerName = "Super Chat"; p.amount = "$20.00"; p.message = "Love the stream!"; }
         if (type === 'supersticker') { p.triggerName = "Super Sticker"; p.amount = "$5.00"; p.stickerImageUrl = "https://www.gstatic.com/youtube/img/pdg/gift/assets/loot_box.webp"; p.message = "Awesome!"; }
         if (type === 'jewels') { p.triggerName = "Jewels Gifted"; p.jewelsAmount = 150; p.jewelsName = "Controller"; p.jewelsUrl = "https://www.gstatic.com/youtube/img/pdg/gift/assets/controller.webp"; }
+        if (type === 'follow') p.triggerName = "New Follower";
+        if (type === 'cheer') { p.triggerName = "Bits Cheered"; p.amount = 500; p.message = "Take my bits!"; }
+        if (type === 'raid') { p.triggerName = "Incoming Raid"; p.userName = "BigStreamer"; p.count = 42; }
         if (previewFrame) previewFrame.contentWindow.postMessage({ type: 'TRIGGER_ALERT_TEST', payload: p }, '*');
       });
     }
