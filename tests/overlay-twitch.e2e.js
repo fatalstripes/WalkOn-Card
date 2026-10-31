@@ -47,6 +47,14 @@ const server = http.createServer((req, res) => {
   r = await fire('Sub', { user: { name: 'Tommy' }, sub_tier: 'tier 3' });
   assert.match(r.body, /Tier 3/);
 
+  // levelName must be escaped (shown literally, not parsed as HTML)
+  await page.goto(`${base}/gta-overlay.html?modules=alerts&aDur=1`, { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => window.gtaOverlay.enqueueAlert({ alertType: 'sub', platform: 'twitch', triggerName: 't', userName: 'u', levelName: '<i>x</i>' }));
+  await page.waitForFunction(() => document.getElementById('alert-container').classList.contains('animate-in'));
+  const esc = await page.evaluate(() => ({ text: document.getElementById('alert-body').textContent, hasI: document.querySelector('#alert-body i') !== null }));
+  assert.equal(esc.text.includes('<i>x</i>'), true, 'levelName must be shown as literal text');
+  assert.equal(esc.hasI, false, 'levelName must not be parsed as HTML');
+
   // Disabled toggle suppresses the alert
   await page.goto(`${base}/gta-overlay.html?modules=alerts&al_rd=0`, { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => window.gtaOverlay.handleTwitchAlert('Raid', { from_broadcaster_user_name: 'X', viewers: 1 }));

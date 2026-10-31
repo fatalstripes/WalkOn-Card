@@ -774,27 +774,27 @@ class GTAOverlayEngine {
     bodyEl.innerHTML = '';
 
     if ((type === 'member' || type === 'sub') && levelName) {
-      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Tier</span><span class="alert-highlight">${levelName}</span></div>`;
+      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Tier</span><span class="alert-highlight">${escapeHtml(levelName)}</span></div>`;
     } else if (type === 'milestone') {
-      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Tenure</span><span class="alert-highlight">${months} Months</span></div>`;
-      if (levelName) bodyEl.innerHTML += `<div class="alert-detail-row"><span>Tier</span><span class="alert-highlight">${levelName}</span></div>`;
+      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Tenure</span><span class="alert-highlight">${escapeHtml(months)} Months</span></div>`;
+      if (levelName) bodyEl.innerHTML += `<div class="alert-detail-row"><span>Tier</span><span class="alert-highlight">${escapeHtml(levelName)}</span></div>`;
     } else if (type === 'gift') {
-      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Gifted</span><span class="alert-highlight">${count} Memberships</span></div>`;
+      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Gifted</span><span class="alert-highlight">${escapeHtml(count)} Memberships</span></div>`;
     } else if (type === 'giftRec') {
-      bodyEl.innerHTML += `<div class="alert-detail-row"><span>From</span><span class="alert-highlight">${gifterUser || 'Anonymous'}</span></div>`;
+      bodyEl.innerHTML += `<div class="alert-detail-row"><span>From</span><span class="alert-highlight">${escapeHtml(gifterUser || 'Anonymous')}</span></div>`;
     } else if (type === 'superchat') {
-      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Amount</span><span class="alert-highlight amount">${amount}</span></div>`;
+      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Amount</span><span class="alert-highlight amount">${escapeHtml(amount)}</span></div>`;
     } else if (type === 'supersticker') {
-      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Amount</span><span class="alert-highlight amount">${amount}</span></div>`;
-      if (stickerUrl) bodyEl.innerHTML += `<div class="alert-media"><img src="${stickerUrl}" /></div>`;
+      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Amount</span><span class="alert-highlight amount">${escapeHtml(amount)}</span></div>`;
+      if (stickerUrl) bodyEl.innerHTML += `<div class="alert-media"><img src="${escapeHtml(stickerUrl)}" /></div>`;
     } else if (type === 'cheer') {
       bodyEl.innerHTML += `<div class="alert-detail-row"><span>Bits</span><span class="alert-highlight amount">${escapeHtml(amount)}</span></div>`;
     } else if (type === 'raid') {
       bodyEl.innerHTML += `<div class="alert-detail-row"><span>Raiders</span><span class="alert-highlight amount">${escapeHtml(count)} Viewers</span></div>`;
     } else if (type === 'jewels') {
-      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Sent</span><span class="alert-highlight amount">${jewelsAmount} Jewels</span></div>`;
-      if (jewelsName) bodyEl.innerHTML += `<div class="alert-detail-row"><span>Gift</span><span class="alert-highlight">${jewelsName}</span></div>`;
-      if (jewelsUrl) bodyEl.innerHTML += `<div class="alert-media"><img src="${jewelsUrl}" /></div>`;
+      bodyEl.innerHTML += `<div class="alert-detail-row"><span>Sent</span><span class="alert-highlight amount">${escapeHtml(jewelsAmount)} Jewels</span></div>`;
+      if (jewelsName) bodyEl.innerHTML += `<div class="alert-detail-row"><span>Gift</span><span class="alert-highlight">${escapeHtml(jewelsName)}</span></div>`;
+      if (jewelsUrl) bodyEl.innerHTML += `<div class="alert-media"><img src="${escapeHtml(jewelsUrl)}" /></div>`;
     }
 
     if (message) {

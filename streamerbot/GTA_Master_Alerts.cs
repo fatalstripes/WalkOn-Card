@@ -6,6 +6,9 @@ using Newtonsoft.Json.Linq;
 
 public class CPHInline
 {
+    // Shared recipient arg names for Twitch GiftSub (used by avatar lookup and the giftRec case).
+    private static readonly string[] RecipientArgs = { "recipientUserLogin", "recipientLogin", "recipientUserName", "recipientUser", "recipient", "targetUser" };
+
     private object ArgAny(params string[] keys)
     {
         foreach (string k in keys)
@@ -54,6 +57,21 @@ public class CPHInline
         else if (tNameLower.Contains("member") || tNameLower.Contains("sponsor")) alertType = "member";
         else if (tNameLower.Contains("jewel")) alertType = "jewels";
 
+        // Drop single GiftSubs that belong to a gift bomb (mirrors js/twitch-events.js) so a bomb doesn't flood.
+        // NOTE: these arg names are guesses; confirm against real Streamer.bot args.
+        if (isTwitch && alertType == "giftRec")
+        {
+            object bombObj = ArgAny("fromCommunitySubGift", "fromGiftBomb", "fromSubBomb", "fromCommunityGift");
+            string bombStr = bombObj != null ? bombObj.ToString() : "";
+            bool fromBomb;
+            if (!bool.TryParse(bombStr, out fromBomb)) fromBomb = bombStr == "1";
+            if (fromBomb)
+            {
+                CPH.LogInfo("[GTA-Alert] Skipping GiftSub that is part of a gift bomb.");
+                return true;
+            }
+        }
+
         var payload = new Dictionary<string, object>
         {
             { "event", "GTA_Alert" },
@@ -80,7 +98,7 @@ public class CPHInline
             try
             {
                 object loginObj = (alertType == "giftRec")
-                    ? ArgAny("recipientUserLogin", "recipientLogin", "recipientUser", "recipient", "targetUser")
+                    ? ArgAny(RecipientArgs)
                     : ArgAny("userLogin", "userName", "user");
                 string login = loginObj != null ? loginObj.ToString() : payload["userName"].ToString();
                 var info = CPH.TwitchGetExtendedUserInfoByLogin(login);
@@ -133,7 +151,7 @@ public class CPHInline
             case "giftRec":
                 if (isTwitch)
                 {
-                    object recipient = ArgAny("recipientUser", "recipient", "targetUser");
+                    object recipient = ArgAny(RecipientArgs);
                     if (recipient != null) payload["userName"] = recipient.ToString();
                     payload["gifterUser"] = args.ContainsKey("user") ? args["user"].ToString() : "Anonymous";
                     break;

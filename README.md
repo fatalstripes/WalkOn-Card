@@ -29,6 +29,9 @@ A modular, customizable OBS Studio Browser Source overlay suite inspired by **Gr
   * GiftSub -> **Gift Membership Received**
   * Cheer -> **Bits Cheered**
   * Raid -> **Incoming Raid**
+* **Native listening:** the overlay already listens to `Twitch.*` events natively, so wiring Twitch triggers to `GTA_Master_Alerts.cs` is OPTIONAL. Doing both shows each alert twice, so use one or the other.
+* **Gift bombs:** a single GiftSub maps to Gift Received, and GiftSubs that belong to a gift bomb are dropped to avoid flooding.
+* **Toggles:** Twitch Sub/ReSub/GiftBomb/GiftSub reuse the existing `al_sub`, `al_ms`, `al_gft` and `al_grc` toggles; Follow, Cheer and Raid use `al_fol`, `al_cht` and `al_rd`.
 * **New URL toggles:** `al_fol` (Follower), `al_cht` (Cheer) and `al_rd` (Raid), available in the Twitch Events panel of the Alerts tab.
 * **New and updated Streamer.bot scripts:**
   * `GTA_WalkOnTwitch.cs` - Twitch walk-on card.

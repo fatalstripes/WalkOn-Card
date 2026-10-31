@@ -12,8 +12,18 @@ public class CPHInline
         CPH.TryGetArg<string>("successMessage", out string successMessage);
         CPH.TryGetArg<string>("failMessage", out string failMessage);
 
-        if (string.IsNullOrEmpty(userType) && CPH.TryGetArg<string>("eventSource", out string src) && !string.IsNullOrEmpty(src))
-            userType = src;
+        if (string.IsNullOrEmpty(userType))
+        {
+            // Command triggers set eventSource to "command"; the real platform is in commandSource.
+            foreach (string key in new[] { "commandSource", "eventSource" })
+            {
+                if (CPH.TryGetArg<string>(key, out string src) && !string.IsNullOrEmpty(src))
+                {
+                    string srcLower = src.ToLower();
+                    if (srcLower == "twitch" || srcLower == "youtube") { userType = srcLower; break; }
+                }
+            }
+        }
         userType = userType?.ToLower() ?? "youtube";
 
         // Clean the target username for the database lookup
