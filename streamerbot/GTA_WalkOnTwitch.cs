@@ -6,12 +6,12 @@ public class CPHInline
 {
     public bool Execute()
     {
-        string user = args.ContainsKey("userName") ? args["userName"].ToString()
-                    : (args.ContainsKey("user") ? args["user"].ToString() : "");
+        string user = args.ContainsKey("userName") ? (args["userName"]?.ToString() ?? "")
+                    : (args.ContainsKey("user") ? (args["user"]?.ToString() ?? "") : "");
         if (string.IsNullOrWhiteSpace(user)) return false;
 
-        string eventName = args.ContainsKey("eventName") ? args["eventName"].ToString() : "MemberWalkOn";
-        bool isTest = args.ContainsKey("isTest") && args["isTest"].ToString().ToLower() == "true";
+        string eventName = args.ContainsKey("eventName") ? (args["eventName"]?.ToString() ?? "MemberWalkOn") : "MemberWalkOn";
+        bool isTest = args.ContainsKey("isTest") && args["isTest"]?.ToString()?.ToLower() == "true";
 
         string avatarUrl = isTest ? "https://i.pravatar.cc/300?img=47" : "";
         if (!isTest)
@@ -39,8 +39,12 @@ public class CPHInline
             { "levelName", levelName }
         };
 
-        int? months = CPH.GetTwitchUserVar<int?>(user, "months", true);
-        if (months.HasValue) payload["months"] = months.Value;
+        try
+        {
+            int? months = CPH.GetTwitchUserVar<int?>(user, "months", true);
+            if (months.HasValue) payload["months"] = months.Value;
+        }
+        catch (Exception exMonths) { CPH.LogWarn($"[GTA-WalkOnTwitch] Could not read months: {exMonths.Message}"); }
 
         string json = JsonConvert.SerializeObject(payload);
         CPH.LogInfo($"[GTA-WalkOnTwitch] Broadcasting: {json}");

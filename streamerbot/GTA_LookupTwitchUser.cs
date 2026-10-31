@@ -27,11 +27,11 @@ public class CPHInline
 
     public bool Execute()
     {
-        string targetUser = args.ContainsKey("targetUser") ? args["targetUser"].ToString().Trim() : "";
+        string targetUser = args.ContainsKey("targetUser") ? (args["targetUser"]?.ToString()?.Trim() ?? "") : "";
         string requestedVarsCsv = args.ContainsKey("requestedVars")
-            ? args["requestedVars"].ToString()
+            ? (args["requestedVars"]?.ToString() ?? "avatarUrl,levelName,months,memberSince,loyaltyLevel")
             : "avatarUrl,levelName,months,memberSince,loyaltyLevel";
-        string eventName = args.ContainsKey("eventName") ? args["eventName"].ToString() : "MemberWalkOn";
+        string eventName = args.ContainsKey("eventName") ? (args["eventName"]?.ToString() ?? "MemberWalkOn") : "MemberWalkOn";
 
         if (string.IsNullOrEmpty(targetUser))
         {
